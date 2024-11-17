@@ -1,0 +1,284 @@
+1=========================================================
+ 
+
+import java.util.Scanner;
+
+class Cricket 
+{
+    String name;
+    int innings, notOuts, totalRuns;
+    float batAvg;
+
+    public Cricket()
+     {
+        name = "";
+        innings = notOuts = totalRuns = 0;
+        batAvg = 0.0f; // float
+    }
+
+    public void getDetails() 
+    {
+        Scanner sc = new Scanner(System.in);
+        System.out.println("Enter Name, Innings, Times Not Out, Total Runs:");
+        name = sc.nextLine();
+        innings = sc.nextInt();
+        notOuts = sc.nextInt();
+        totalRuns = sc.nextInt();
+    }
+
+    public void calculateAverage() 
+    {
+        try
+         {
+            if (innings - notOuts == 0) 
+            {  
+                throw new ArithmeticException("Division by zero: Player never got out.");
+            }
+            this.batAvg = (float) totalRuns / (innings - notOuts);
+        } 
+        catch (ArithmeticException e)
+         {
+            System.out.println("Error for player " + name + ": " + e.getMessage());
+            this.batAvg = 0.0f; // Default to 0.0 if error occurs
+        }
+    }
+
+    public void displayDetails()
+     {
+        System.out.println("Name: " + name);
+        System.out.println("Innings: " + innings);
+        System.out.println("Times Not Out: " + notOuts);
+        System.out.println("Total Runs: " + totalRuns);
+        System.out.println("Batting Average: " + batAvg);
+    }
+}
+
+class seta1
+ {
+    public static void main(String[] args)
+     {
+        Scanner sc = new Scanner(System.in);
+        System.out.println("Enter the number of players:");
+        int n = sc.nextInt();
+        Cricket players[] = new Cricket[n];
+
+        for (int i = 0; i < n; i++)
+         {
+            players[i] = new Cricket();
+            players[i].getDetails();
+            players[i].calculateAverage(); // Calculate average after getting details
+        }
+
+        // Sort by batting average in descending order
+        for (int i = 0; i < n - 1; i++) 
+        {
+            for (int j = 0; j < n - 1 - i; j++)
+             {
+                if (players[j].batAvg < players[j + 1].batAvg) 
+                {  
+                    Cricket temp = players[j];
+                    players[j] = players[j + 1];
+                    players[j + 1] = temp;
+                }
+            }
+        }
+        
+        System.out.println("\nPlayer Details (Sorted by Batting Average):");
+        for (Cricket player : players)
+         {
+            player.displayDetails();
+        }
+    }
+}
+2======================================================================================
+import java.util.Scanner;
+// Custom Exception for Insufficient Funds
+class InsufficientFundException extends Exception 
+{
+    public InsufficientFundException(String message) 
+    {
+        super(message);
+    }
+}
+
+class SavingAccount 
+{
+    int acNo;
+    String name;
+    double balance = 500.0d;
+
+    // Accept account details
+    public void accept() 
+    {
+        Scanner sc = new Scanner(System.in);
+        System.out.println("Enter Account Number, Name, and Balance:");
+        acNo = sc.nextInt();
+        name = sc.nextLine();
+        balance = sc.nextDouble();
+    }
+    // Withdraw method
+    public void withdraw()
+    {
+        Scanner sc = new Scanner(System.in);
+        System.out.println("Enter Withdrawal Amount:");
+        double wamt = sc.nextDouble();
+
+        try
+         {
+            if ((balance - wamt) < 500)
+            {
+                throw new InsufficientFundException("Error: Insufficient Balance (Min Rs500 required)");
+            }
+             else 
+             {
+                balance =balance- wamt;
+                System.out.println("Withdrawal Successful! Remaining Balance: Rs:" + balance);
+            }
+        } 
+        catch (InsufficientFundException e) 
+        {
+            System.out.println(e.getMessage());
+        }
+    }
+
+    // Deposit method
+    public void deposit()
+     {
+        Scanner sc = new Scanner(System.in);
+        System.out.println("Enter Deposit Amount:");
+        double damt = sc.nextDouble();
+        balance =balance + damt;
+        System.out.println("Deposit Successful! New Balance: Rs:" + balance);
+    }
+
+    public void viewBalance()
+     {
+        System.out.println("Current Balance: Rs:" + balance);
+    }
+}
+
+public class seta2
+ {
+    public static void main(String[] args)
+     {
+        Scanner sc = new Scanner(System.in);
+        System.out.println("Enter Number of Customers:");
+        int n = sc.nextInt();
+
+        // Create an array of SavingAccount objects
+        SavingAccount accounts[]= new SavingAccount[n];
+        for (int i = 0; i < n; i++) 
+        {
+            accounts[i] = new SavingAccount();
+            accounts[i].accept();
+        }
+
+        // Menu for customer operations
+        System.out.println("Enter Customer Number 1 to "+ n+":");
+        int customerNo =(sc.nextInt()) - 1;
+            if (customerNo < 0 || customerNo >= n) 
+            {
+                System.out.println("Invalid Customer Number!");
+                return;
+            }
+            int choice;
+            do {
+                System.out.println("\n1. Withdraw\n2. Deposit\n3. View Balance\n4. Quit");
+                System.out.print("Select Option: ");
+                choice = sc.nextInt();
+                switch (choice)
+                 {
+                    case 1:
+                        accounts[customerNo].withdraw();
+                        break;
+                    case 2:
+                        accounts[customerNo].deposit();
+                        break;
+                    case 3:
+                        accounts[customerNo].viewBalance();
+                        break;
+                    case 4:
+                        System.out.println("Returning to Customer Selection...");
+                        break;
+                    default:
+                        System.out.println("Invalid Option! Try Again.");
+                }
+            } while (choice != 4);
+        }
+
+   
+    
+}
+
+
+3========================================================================================
+import java.util.Scanner;
+
+class InvalidDateException extends Exception
+ {
+    public InvalidDateException(String message)
+     {
+        super(message);
+    }
+}
+
+class MyDate
+ {
+    int day;
+    int month;
+    int year;
+
+    public void accept(int d, int m, int y) throws InvalidDateException 
+    {
+        if (m < 1 || m > 12) 
+        {
+            throw new InvalidDateException("Month must be between 1 and 12");
+        }
+
+        int[] daysInMonth = { 31, isLeapYear(y) ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
+        if (d < 1 || d > daysInMonth[m - 1]) 
+        {
+            throw new InvalidDateException("Day is not valid for the given month and year");
+        }
+
+        this.day = d;
+        this.month = m;
+        this.year = y;
+    }
+
+    public void display()
+     {
+        System.out.println("Date is valid: " + day + "/" + month + "/" + year);
+    }
+
+    private boolean isLeapYear(int year) 
+    {
+        return (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0);
+    }
+}
+
+public class setb1
+ {
+    public static void main(String[] args)
+     {
+        Scanner sc = new Scanner(System.in);
+        MyDate date = new MyDate();
+
+        System.out.println("Enter Date (dd mm yyyy):");
+        int day = sc.nextInt();
+        int month = sc.nextInt();
+        int year = sc.nextInt();
+
+        try
+        {
+            date.accept(day, month, year);
+            date.display();
+        }
+         catch (InvalidDateException e) 
+         {
+            System.out.println("Error: " + e.getMessage());
+        } 
+    
+    }
+}
+=================================================================================

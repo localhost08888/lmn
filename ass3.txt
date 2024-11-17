@@ -1,0 +1,666 @@
+1=======================================
+import java.util.Scanner;
+
+ class employee 
+ {
+    private int id;
+    private String name, dept;
+    private double salary;
+    
+    // Default constructor
+    employee() 
+    {
+        id = 0;
+        name = "";
+        dept = "";
+        salary = 0.0;
+    }
+    
+    // Parameterized constructor
+    employee(int id, String name, String dept, double salary)
+     {
+        this.id = id;
+        this.name = name;
+        this.dept = dept;
+        this.salary = salary;
+    }
+    
+    // Method to accept employee details
+    public void accept() 
+    {
+        Scanner x = new Scanner(System.in);
+        System.out.println("Enter id-");
+        id = x.nextInt();
+        x.nextLine();  // To consume the newline character after nextInt()
+        System.out.println("Enter employee name-");
+        name = x.nextLine();
+
+        System.out.println("Enter employee department-");
+        dept = x.nextLine();
+
+        System.out.println("Enter salary-");
+        salary = x.nextDouble();
+    }
+
+    // Method to display employee details
+    public void display()
+     {
+        System.out.println("Employee id - " + id);
+        System.out.println("Employee name - " + name);
+        System.out.println("Employee department - " + dept);
+        System.out.println("Employee salary - " + salary);
+    }
+
+    // Method to get salary
+    public double getsalary()
+     {
+        return salary;
+    }
+}
+
+class manager extends employee 
+{
+    private double bonus;
+    
+    // Method to accept manager details
+    public void accept() 
+    {  
+        super.accept();
+        Scanner x = new Scanner(System.in);
+        System.out.println("Enter manager bonus-");
+        bonus = x.nextDouble();
+    }
+    
+    // Method to calculate total salary (salary + bonus)
+    double totalsalary()
+     {
+        return bonus + getsalary();
+    }
+
+    // Method to display manager details
+    public void display()
+     {
+        super.display();
+        System.out.println("Manager bonus - " + bonus);
+        System.out.println("Manager total salary is - " + totalsalary());
+    } 
+    
+    
+}
+
+class seta1
+ {
+    public static void main(String[] arg)
+     {
+        Scanner x = new Scanner(System.in);
+        System.out.println("How many objects you want to create?");
+        int n = x.nextInt();
+        manager M[]= new manager[n]; // Array of manager objects
+        
+        // Accept details for each manager
+        for (int i = 0; i < n; i++) 
+        {
+            System.out.println("Enter details of manager " + (i + 1) + ":-");
+            M[i] = new manager(); // Creating new object 
+            M[i].accept();
+        }
+        
+        // Display details of all managers
+        System.out.println("Details of managers:");
+        for (int i = 0; i < n; i++) 
+        {
+            M[i].display();
+        }
+
+        // Find and display the manager with the maximum salary
+        manager maxsalary = M[0];
+        for (int i = 1; i < n; i++) 
+        {  
+            if (M[i].getsalary() > maxsalary.getsalary()) 
+            {
+                maxsalary = M[i];
+            }
+        }
+        System.out.println("Details of manager having maximum salary:");
+        maxsalary.display();
+    }
+}
+2=======================================================================================
+//package assignment3;
+
+import java.util.Scanner;
+
+abstract class Shape
+ {
+    abstract public void area();
+    abstract public void volume();
+    final double pi=3.14;
+}
+class sphere extends Shape
+{
+    double r;
+    private double area;
+    private double  volume ;
+
+    public void accept()
+    {
+        Scanner x=new Scanner(System.in);
+        System.out.println("enter the radius of the sphere");
+         r=x.nextDouble();
+    }
+   public void area()
+   {
+      area=pi*r*r;
+   }
+   public void volume()
+   {
+      volume=1.3333*(pi)*r*r*r;
+   }
+
+   public void display()
+   {
+      area();
+      volume();
+      System.out.println("the area of sphere is-"+area);
+      System.out.println("the volume of sphere is-"+volume);
+   }
+}
+//---------------------------------------------------------------------------------
+class cone extends Shape
+{
+    double h,r,area,volume;
+    public void accept()
+    {
+        Scanner x=new Scanner(System.in);
+        System.out.println("enter the radius  and height of the cone");
+         r=x.nextDouble();
+         h=x.nextDouble();
+    }
+    public void area()
+    {
+        double sq=h*h+r*r;
+        area=pi*r*(r+java.lang.Math.sqrt(sq));
+    }
+    public void volume()
+    {
+        double d=h/3;
+        volume=pi*r*r*d;
+    }
+    public void display()
+    {
+        area();
+        volume();
+        System.out.println("The area of Cone is: "+area);
+        System.out.println("The volume of Cone is: "+volume);
+    }
+}
+//---------------------------------------------------------------------------------
+class cylinder extends Shape
+{
+    double r,h,area,volume;
+    public void accept()
+    {
+        Scanner x=new Scanner(System.in);
+        System.out.println("enter the radius  and height of the cylinder");
+         r=x.nextDouble();
+         h=x.nextDouble();
+    }
+
+    public void area()
+    {
+        area= (2*pi*r*h)+(2*pi*r*r);
+    }
+    public void volume()
+    {
+        volume=pi*r*r*h;
+    }
+    public void display()
+    {
+        area();
+        volume();
+        System.out.println("The area of Cylinder is: "+area);
+        System.out.println("The volume of Cylinder is: "+volume);
+    }
+}
+//-----------------------------------------------------------------------------
+class box extends Shape
+{
+    double l,b,h,area,volume;
+    public void accept()
+    {
+        Scanner x=new Scanner(System.in);
+        System.out.println("enter the  length,breadth,height of box");
+         l=x.nextDouble();
+         b=x.nextDouble();
+         h=x.nextDouble();
+    }
+
+    public void area()
+    {
+        area= (2*l*b)+(2*b*h)+(2*l*h);
+    }
+    public void volume()
+    {
+        volume=l*b*h;
+    }
+    public void display()
+    {
+        area();
+        volume();
+        System.out.println("The area of box is: "+area);
+        System.out.println("The volume of box is: "+volume);
+    }
+}
+//-------------------------------------------------------------------
+class seta2
+{
+  public static void main(String[] args)
+     {
+       sphere x=new sphere();
+       x.accept();
+       x.display(); 
+
+       cone y=new cone();
+       y.accept();
+       y.display();
+
+       cylinder z=new cylinder();
+       z.accept();
+       z.display();
+
+       box s=new box();
+       s.accept();
+       s.display();
+
+    }
+}
+3===========================================================================================
+import java.util.Scanner;
+
+class Vehicle 
+{ 
+    String company;
+    double price;
+     public void accept()// Accept vehicle details
+     {  
+        Scanner br=new Scanner(System.in);
+        System.out.println("Enter the Company and price of the Vehicle: ");
+        company = br.nextLine();
+        price = br.nextDouble();
+     }
+
+     public void display() // Display vehicle details
+        {
+            System.out.println("Company: " + company + " Price: " + price);
+        }
+}
+//---------------------------------------------------------------------------------
+class LightMotorVehicle extends Vehicle 
+{
+    double mileage;
+    public void accept()// Accept details of light motor vehicle
+     {
+        super.accept();
+        Scanner br=new Scanner(System.in);
+        System.out.println("Enter the mileage of the vehicle: ");
+        mileage = br.nextDouble();
+     }
+
+    public void display()  // Display details of light motor vehicle
+    {
+        super.display();
+        System.out.println("Mileage: " + mileage);
+    }
+}
+//---------------------------------------------------------------------------------
+class HeavyMotorVehicle extends Vehicle 
+{
+    double captons;
+
+    public void accept() // Accept details of heavy motor vehicle
+    {
+        super.accept();
+        Scanner br=new Scanner(System.in);
+        System.out.println("Enter the capacity of the vehicle in tons: ");
+        captons = br.nextDouble();
+    }
+
+    // Display details of heavy motor vehicle
+    public void display()
+     {
+        super.display();
+        System.out.println("Capacity in tons: " + captons);
+    }
+}
+//---------------------------------------------------------------------------------
+public class seta3
+ {
+    public static void main(String[] args) 
+    {
+        Scanner br=new Scanner(System.in);
+        System.out.println("Enter the type of vehicle: ");
+        System.out.println("1. Light Vehicle");
+        System.out.println("2. Heavy Vehicle");
+        int ch = br.nextInt();
+
+        switch (ch)
+         {
+            case 1:
+                System.out.println("Enter the number of Light vehicles: ");
+                int n = br.nextInt();
+                LightMotorVehicle arr[] = new LightMotorVehicle[n];
+
+                // Accept details for light motor vehicles
+                for (int i = 0; i < n; i++) 
+                {
+                    arr[i] = new LightMotorVehicle();
+                    arr[i].accept();
+                }
+
+                // Display details of light motor vehicles
+                for (int i = 0; i < n; i++)
+                 {
+                    arr[i].display();
+                  }
+                break;
+
+            case 2:
+                System.out.println("Enter the number of Heavy vehicles: ");
+                int m = br.nextInt();
+                HeavyMotorVehicle arr2[] = new HeavyMotorVehicle[m];
+
+                // Accept details for heavy motor vehicles
+                for (int i = 0; i < m; i++)
+                 {
+                    arr2[i] = new HeavyMotorVehicle();
+                    arr2[i].accept();
+                }
+
+                // Display details of heavy motor vehicles
+                for (int i = 0; i < m; i++) 
+                {
+                    arr2[i].display();
+                }
+                break;
+
+            default:
+                System.out.println("Invalid choice!");
+        }
+    }
+}
+4==========================================================================================
+// import java.util.InputMismatchException;
+import java.util.Scanner;
+
+abstract class Staff
+ {
+    String name, address;
+}
+
+class FullTimeStaff extends Staff
+ {
+    String department;
+    double salary;
+
+    public void accept( ) 
+    {
+        Scanner scanner=new Scanner(System.in);
+        System.out.println("Enter the name, address, department and salary: ");
+        name = scanner.nextLine();
+        address = scanner.nextLine();
+        department = scanner.nextLine();
+        salary = scanner.nextDouble();
+        scanner.nextLine(); // Consume newline left-over
+    }
+
+    public void display() 
+    {
+        System.out.println("Name: " + name);
+        System.out.println("Address: " + address);
+        System.out.println("Department: " + department);
+        System.out.println("Salary: " + salary);
+        System.out.println("----------------------");
+    }
+}
+
+class PartTimeStaff extends Staff
+ {
+    int hours, rate;
+
+    public void accept()
+     {
+        Scanner scanner=new Scanner(System.in);
+        System.out.println("Enter the name, address, No of working hours and rate per hour: ");
+        name = scanner.nextLine();
+        address = scanner.nextLine();
+        hours = scanner.nextInt();
+        rate = scanner.nextInt();
+        scanner.nextLine(); // Consume newline left-over
+    }
+
+    public void display() 
+    {
+        System.out.println("Name: " + name);
+        System.out.println("Address: " + address);
+        System.out.println("No of Working Hours: " + hours);
+        System.out.println("Rate per hour: " + rate);
+        System.out.println("----------------------");
+    }
+}
+
+public class setb1 
+{
+    public static void main(String[] args)
+     {
+        Scanner sc = new Scanner(System.in);
+        int i;
+
+        System.out.println("Select Any One: ");
+        System.out.println("1.Full Time Staff");
+        System.out.println("2.Part Time Staff");
+        int ch = sc.nextInt();
+        sc.nextLine(); // Consume newline left-over
+
+        switch (ch)
+         {
+            case 1:
+                System.out.println("Enter the number of Full Time Staff: ");
+                int n = sc.nextInt();
+                
+                FullTimeStaff l[]= new FullTimeStaff[n];
+                for (i = 0; i < n; i++)
+                 {
+                    l[i] = new FullTimeStaff();
+                    l[i].accept();
+                }
+                for (i = 0; i < n; i++)
+                 {
+                    l[i].display();
+                }
+                break;
+            case 2:
+                System.out.println("Enter the number of Part Time Staff: ");
+                int m = sc.nextInt();
+               
+                PartTimeStaff h[] = new PartTimeStaff[m];
+                for (i = 0; i < m; i++)
+                 {
+                    h[i] = new PartTimeStaff();
+                    h[i].accept();
+                }
+                for (i = 0; i < m; i++)
+                 {
+                    h[i].display();
+                }
+                break;
+        }
+    }
+}
+5===================================================================================
+import java.util.Scanner;
+
+interface CreditCard
+ {
+    void viewCreditAmount();
+    void increaseLimit();
+    void useCard();
+    void payCard();
+}
+
+class SliverCardCustomer implements CreditCard
+ {
+    String name;
+    int card_no;
+    double creditAmount;
+    double creaditLimit;
+    static int cnt;
+    Scanner scanner = new Scanner(System.in);
+
+    SliverCardCustomer() 
+    {
+        name = "Noname";
+        card_no = 0;
+        creditAmount = 0;
+        creaditLimit = 50000;
+    }
+
+    public void viewCreditAmount()
+     {
+        System.out.println("Your amount is : " + creditAmount);
+    }
+
+    public void getdata() 
+    {
+        System.out.println("Enter the name : ");
+        name = scanner.nextLine();
+
+        System.out.println("Enter the card number :");
+        card_no = scanner.nextInt();
+        scanner.nextLine();
+
+        System.out.println("Enter Credit amount : ");
+        creditAmount = scanner.nextDouble();
+        scanner.nextLine();
+    }
+
+    public void payCard()
+     {
+        System.out.println("Enter amount to be pay");
+        double pay = scanner.nextDouble();
+        scanner.nextLine();
+        creditAmount -= pay;
+        System.out.println("Balance is paid");
+    }
+
+    public void useCard() 
+    {
+        System.out.println("Enter amount : ");
+        double amount = scanner.nextDouble();
+        scanner.nextLine();
+        if (amount < creditAmount)
+        {
+            creditAmount += amount;
+            viewCreditAmount();
+            System.out.println("Thanks for using the service");
+        } 
+        else
+         {
+            System.out.println("\nerror!");
+        }
+    }
+
+    public void increaseLimit()
+     {
+        cnt++;
+        if (cnt <= 3) 
+        {
+            System.out.println("Enter amount limit to increse : ");
+            double amt = scanner.nextDouble();
+            scanner.nextLine();
+            if (amt <= 2500)
+             {
+                creaditLimit += amt;
+                System.out.println("Amount limit to increse Successfully : ");
+            } 
+            else 
+            {
+                System.out.println("You can't increse creadit amount more than 2500 at a time ");
+            }
+        } 
+        else
+         {
+            System.out.println("You can't increse limit more than 3 times ");
+        }
+    }
+}
+
+class GoldCardCustomer extends SliverCardCustomer
+ {
+    public void increaseLimit() 
+    {
+        if (cnt <= 3) 
+        {
+            System.out.println("Enter amount limit to increse : ");
+            double amt = scanner.nextDouble();
+            scanner.nextLine();
+            if (amt <= 5000)
+             {
+                creaditLimit += amt;
+                System.out.println("Amount limit to increse Successfully : ");
+            } 
+            else
+             {
+                System.out.println("You can't increse creadit amount more than 2500 at a time ");
+            }
+        } 
+        else
+         {
+            System.out.println("You can't increse limit more than 3 times ");
+        }
+    }
+}
+
+public class setb2
+{
+    public static void main(String[] args)
+     {
+        Scanner scanner = new Scanner(System.in);
+        SliverCardCustomer sc = new SliverCardCustomer();
+        GoldCardCustomer gc = new GoldCardCustomer();
+        System.out.println("Enter the info for silver card holder : ");
+        sc.getdata();
+        System.out.println("Enter the info for Gold card holder : ");
+        gc.getdata();
+        int ch;
+        do {
+            System.out.println("1.Use silver card \n2.Pay credit for Silver card\n3.Increse limit for silver card ");
+            System.out.println("4.Use Gold card \n5.Pay credit for Gold card\n6.Increse limit for Gold card ");
+            System.out.println("0. exit");
+            System.out.println("Enter your choice : ");
+            ch = scanner.nextInt();
+            scanner.nextLine();
+            switch (ch) 
+            {
+                case 1:
+                    sc.useCard();
+                    break;
+                case 2:
+                    sc.payCard();
+                    break;
+                case 3:
+                    sc.increaseLimit();
+                    break;
+                case 4:
+                    gc.useCard();
+                    break;
+                case 5:
+                    gc.payCard();
+                    break;
+                case 6:
+                    gc.increaseLimit();
+                    break;
+            }
+        } 
+        while (ch != 0);
+    }
+}
