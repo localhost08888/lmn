@@ -1,0 +1,231 @@
+Here’s how you can define the Bank Database schema, insert sample entries, and implement the required queries, views, and functions.
+
+
+---
+
+1. Table Definitions
+
+CREATE TABLE BRANCH (
+    BID INTEGER PRIMARY KEY,
+    BRNAME CHAR(30),
+    BRCITY CHAR(10)
+);
+
+CREATE TABLE CUSTOMER (
+    CNO INTEGER PRIMARY KEY,
+    CNAME CHAR(20),
+    CADDR CHAR(35),
+    CITY CHAR(20)
+);
+
+CREATE TABLE LOAN_APPLICATION (
+    LNO INTEGER PRIMARY KEY,
+    LAMTREQUIRED MONEY,
+    LAMTAPPROVED MONEY,
+    L_DATE DATE
+);
+
+CREATE TABLE TERNARY (
+    BID INTEGER REFERENCES BRANCH(BID),
+    CNO INTEGER REFERENCES CUSTOMER(CNO),
+    LNO INTEGER REFERENCES LOAN_APPLICATION(LNO),
+    PRIMARY KEY (BID, CNO, LNO)
+);
+
+
+---
+
+2. Insert Sample Data
+
+a) Insert Data into BRANCH Table
+
+INSERT INTO BRANCH (BID, BRNAME, BRCITY) VALUES
+(1, 'Aundh', 'Pune'),
+(2, 'Deccan', 'Pune'),
+(3, 'M.G. ROAD', 'Mumbai'),
+(4, 'Sadashiv Peth', 'Pune');
+
+b) Insert Data into CUSTOMER Table
+
+INSERT INTO CUSTOMER (CNO, CNAME, CADDR, CITY) VALUES
+(101, 'Anil', 'Kothrud', 'Pune'),
+(102, 'Asha', 'Baner', 'Pune'),
+(103, 'Rahul', 'Shivajinagar', 'Pune'),
+(104, 'Sneha', 'Andheri', 'Mumbai'),
+(105, 'Aman', 'Sadashiv Peth', 'Pune'),
+(106, 'Anjali', 'Borivali', 'Mumbai');
+
+c) Insert Data into LOAN_APPLICATION Table
+
+INSERT INTO LOAN_APPLICATION (LNO, LAMTREQUIRED, LAMTAPPROVED, L_DATE) VALUES
+(201, 500000.00, 450000.00, '2023-09-10'),
+(202, 300000.00, 300000.00, '2023-03-15'),
+(203, 100000.00, 80000.00, '2023-09-20'),
+(204, 200000.00, 150000.00, '2023-03-25'),
+(205, 60000.00, 60000.00, '2023-09-30'),
+(206, 500000.00, 500000.00, '2023-10-05');
+
+d) Insert Data into TERNARY Table
+
+INSERT INTO TERNARY (BID, CNO, LNO) VALUES
+(1, 101, 201),  -- Anil, Aundh branch
+(1, 102, 203),  -- Asha, Aundh branch
+(2, 103, 202),  -- Rahul, Deccan branch
+(3, 104, 204),  -- Sneha, M.G. Road branch
+(4, 105, 205),  -- Aman, Sadashiv Peth branch
+(4, 106, 206);  -- Anjali, Sadashiv Peth branch
+
+
+---
+
+3. Queries
+
+a) Find the names of the customers for the "Aundh" branch
+
+SELECT C.CNAME
+FROM CUSTOMER C
+JOIN TERNARY T ON C.CNO = T.CNO
+JOIN BRANCH B ON T.BID = B.BID
+WHERE B.BRNAME = 'Aundh';
+
+b) List the names of customers who received a loan less than their requirement
+
+SELECT C.CNAME
+FROM CUSTOMER C
+JOIN TERNARY T ON C.CNO = T.CNO
+JOIN LOAN_APPLICATION L ON T.LNO = L.LNO
+WHERE L.LAMTAPPROVED < L.LAMTREQUIRED;
+
+c) Find the maximum loan amount approved
+
+SELECT MAX(LAMTAPPROVED) AS MAX_APPROVED_LOAN
+FROM LOAN_APPLICATION;
+
+d) Total loan amount sanctioned by "Deccan" branch
+
+SELECT SUM(L.LAMTAPPROVED) AS TOTAL_SANCTIONED
+FROM LOAN_APPLICATION L
+JOIN TERNARY T ON L.LNO = T.LNO
+JOIN BRANCH B ON T.BID = B.BID
+WHERE B.BRNAME = 'Deccan';
+
+e) Count the loan applications received by "M.G. ROAD" branch
+
+SELECT COUNT(*) AS LOAN_COUNT
+FROM TERNARY T
+JOIN BRANCH B ON T.BID = B.BID
+WHERE B.BRNAME = 'M.G. ROAD';
+
+f) Customers and branch names for loans in September
+
+SELECT C.CNAME, B.BRNAME
+FROM CUSTOMER C
+JOIN TERNARY T ON C.CNO = T.CNO
+JOIN LOAN_APPLICATION L ON T.LNO = L.LNO
+JOIN BRANCH B ON T.BID = B.BID
+WHERE EXTRACT(MONTH FROM L.L_DATE) = 9;
+
+g) List customers whose name starts with "A"
+
+SELECT C.CNAME
+FROM CUSTOMER C
+WHERE C.CNAME LIKE 'A%';
+
+h) Loan details approved in March
+
+SELECT *
+FROM LOAN_APPLICATION
+WHERE EXTRACT(MONTH FROM L_DATE) = 3;
+
+
+---
+
+4. Views
+
+a) Customers who applied for loans > Rs. 100000
+
+CREATE VIEW HIGH_VALUE_LOANS AS
+SELECT C.CNAME, C.CADDR, L.*
+FROM CUSTOMER C
+JOIN TERNARY T ON C.CNO = T.CNO
+JOIN LOAN_APPLICATION L ON T.LNO = L.LNO
+WHERE L.LAMTREQUIRED > 100000;
+
+b) Loan applications from Sadashiv Peth
+
+CREATE VIEW SADASHIV_PETH_LOANS AS
+SELECT B.BRNAME, C.CNAME, L.*
+FROM BRANCH B
+JOIN TERNARY T ON B.BID = T.BID
+JOIN CUSTOMER C ON T.CNO = C.CNO
+JOIN LOAN_APPLICATION L ON T.LNO = L.LNO
+WHERE B.BRNAME = 'Sadashiv Peth';
+
+
+---
+
+5. Stored Functions
+
+a) Count the number of customers in a branch
+
+CREATE OR REPLACE FUNCTION get_customer_count(branch_name CHAR)
+RETURNS INTEGER AS $$
+DECLARE
+    customer_count INTEGER;
+BEGIN
+    SELECT COUNT(DISTINCT CNO)
+    INTO customer_count
+    FROM TERNARY T
+    JOIN BRANCH B ON T.BID = B.BID
+    WHERE B.BRNAME = branch_name;
+
+    IF customer_count IS NULL THEN
+        RAISE EXCEPTION 'Invalid branch name: %', branch_name;
+    END IF;
+
+    RETURN customer_count;
+END;
+$$ LANGUAGE plpgsql;
+
+b) Get loan details for a customer
+
+CREATE OR REPLACE FUNCTION get_loan_details_by_customer(cno_input INTEGER)
+RETURNS TABLE (LNO INTEGER, LAMTREQUIRED MONEY, LAMTAPPROVED MONEY, L_DATE DATE) AS $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM CUSTOMER WHERE CNO = cno_input) THEN
+        RAISE EXCEPTION 'Invalid customer number: %', cno_input;
+    END IF;
+
+    RETURN QUERY
+    SELECT L.LNO, L.LAMTREQUIRED, L.LAMTAPPROVED, L.L_DATE
+    FROM LOAN_APPLICATION L
+    JOIN TERNARY T ON L.LNO = T.LNO
+    WHERE T.CNO = cno_input;
+END;
+$$ LANGUAGE plpgsql;
+
+c) Get total loan approved for a customer
+
+CREATE OR REPLACE FUNCTION get_total_loan_approved(cno_input INTEGER)
+RETURNS MONEY AS $$
+DECLARE
+    total_loan MONEY;
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM CUSTOMER WHERE CNO = cno_input) THEN
+        RAISE EXCEPTION 'Invalid customer number: %', cno_input;
+    END IF;
+
+    SELECT SUM(L.LAMTAPPROVED)
+    INTO total_loan
+    FROM LOAN_APPLICATION L
+    JOIN TERNARY T ON L.LNO = T.LNO
+    WHERE T.CNO = cno_input;
+
+    RETURN total_loan;
+END;
+$$ LANGUAGE plpgsql;
+
+
+---
+
+This setup includes data entries, queries, views, and stored functions for the Bank Database. Let me know if you need any further assistance!

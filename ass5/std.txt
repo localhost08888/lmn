@@ -1,0 +1,174 @@
+Here’s how to solve the queries and implement the triggers in PostgreSQL for the Student-Teacher Database:
+
+1. Create Tables and Insert Data
+
+-- Create STUDENT Table
+CREATE TABLE STUDENT (
+    SNO INTEGER PRIMARY KEY,
+    S_NAME CHAR(30),
+    S_CLASS CHAR(10) NOT NULL,
+    S_ADDR CHAR(50)
+);
+
+-- Create TEACHER Table
+CREATE TABLE TEACHER (
+    TNO INTEGER PRIMARY KEY,
+    T_NAME CHAR(20),
+    QUALIFICATION CHAR(15),
+    EXPERIENCE INTEGER
+);
+
+-- Create TEACHES Table (many-to-many relationship between STUDENT and TEACHER)
+CREATE TABLE TEACHES (
+    TNO INTEGER,
+    SNO INTEGER,
+    SUBJECT CHAR(30),
+    PRIMARY KEY (TNO, SNO),
+    FOREIGN KEY (TNO) REFERENCES TEACHER(TNO),
+    FOREIGN KEY (SNO) REFERENCES STUDENT(SNO)
+);
+
+2. Insert Data into Tables
+
+-- Insert into STUDENT table
+INSERT INTO STUDENT (SNO, S_NAME, S_CLASS, S_ADDR) VALUES
+(1, 'Suresh', '10th', '1234 Elm Street'),
+(2, 'Anjali', '12th', '5678 Pine Avenue'),
+(3, 'Ravi', '10th', '91011 Oak Road'),
+(4, 'Priya', '11th', '1213 Maple Blvd'),
+(5, 'Siddhi', '10th', '1415 Cedar St');
+
+-- Insert into TEACHER table
+INSERT INTO TEACHER (TNO, T_NAME, QUALIFICATION, EXPERIENCE) VALUES
+(1, 'Mr. Patil', 'M.Sc.', 6),
+(2, 'Mrs. Shah', 'Ph.D.', 10),
+(3, 'Mr. Desai', 'M.A.', 5),
+(4, 'Ms. Gupta', 'B.Ed.', 4),
+(5, 'Mr. Yadav', 'Ph.D.', 8);
+
+-- Insert into TEACHES table (representing many-to-many relationship)
+INSERT INTO TEACHES (TNO, SNO, SUBJECT) VALUES
+(1, 1, 'Mathematics'),
+(1, 2, 'Physics'),
+(2, 3, 'Chemistry'),
+(3, 4, 'English'),
+(4, 5, 'Biology'),
+(5, 1, 'Computer Science'),
+(5, 2, 'History'),
+(2, 5, 'Literature');
+
+3. Solve the Queries in PostgreSQL:
+
+1. Find the minimum experienced teacher:
+
+
+
+SELECT T.T_NAME, T.EXPERIENCE
+FROM TEACHER T
+WHERE T.EXPERIENCE = (SELECT MIN(EXPERIENCE) FROM TEACHER);
+
+2. Find the number of teachers having qualification "Ph.D.":
+
+
+
+SELECT COUNT(*) 
+FROM TEACHER 
+WHERE QUALIFICATION = 'Ph.D.';
+
+3. Find the names of the students to whom "Mr. Patil" is teaching along with the subjects:
+
+
+
+SELECT S.S_NAME, TE.SUBJECT
+FROM STUDENT S
+JOIN TEACHES TE ON S.SNO = TE.SNO
+JOIN TEACHER T ON TE.TNO = T.TNO
+WHERE T.T_NAME = 'Mr. Patil';
+
+4. Find the subjects taught by each teacher:
+
+
+
+SELECT T.T_NAME, TE.SUBJECT
+FROM TEACHER T
+JOIN TEACHES TE ON T.TNO = TE.TNO;
+
+5. Find the details of all teachers teaching the subject "Computer Science":
+
+
+
+SELECT T.T_NAME, T.QUALIFICATION, T.EXPERIENCE
+FROM TEACHER T
+JOIN TEACHES TE ON T.TNO = TE.TNO
+WHERE TE.SUBJECT = 'Computer Science';
+
+6. Find the details of all students who are taught by a teacher having more than 5 years experience:
+
+
+
+SELECT S.S_NAME, S.S_CLASS, T.T_NAME
+FROM STUDENT S
+JOIN TEACHES TE ON S.SNO = TE.SNO
+JOIN TEACHER T ON TE.TNO = T.TNO
+WHERE T.EXPERIENCE > 5;
+
+7. List the names of the teachers who are teaching to a student named "Suresh":
+
+
+
+SELECT T.T_NAME
+FROM TEACHER T
+JOIN TEACHES TE ON T.TNO = TE.TNO
+JOIN STUDENT S ON TE.SNO = S.SNO
+WHERE S.S_NAME = 'Suresh';
+
+8. List the names of all teachers along with the total number of students they are teaching:
+
+
+
+SELECT T.T_NAME, COUNT(TE.SNO) AS total_students
+FROM TEACHER T
+JOIN TEACHES TE ON T.TNO = TE.TNO
+GROUP BY T.T_NAME;
+
+
+---
+
+4. Write Triggers:
+
+1. Trigger before insert to validate student number (SNO):
+
+
+
+CREATE OR REPLACE FUNCTION check_sno_insert() 
+RETURNS TRIGGER AS $$
+BEGIN
+    IF NEW.SNO <= 0 THEN
+        RAISE EXCEPTION 'Invalid Student Number';
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER sno_insert_trigger
+BEFORE INSERT ON STUDENT
+FOR EACH ROW
+EXECUTE FUNCTION check_sno_insert();
+
+2. Trigger before update to display a message when the S_CLASS is changed:
+
+
+
+CREATE OR REPLACE FUNCTION before_update_sclass() 
+RETURNS TRIGGER AS $$
+BEGIN
+    RAISE NOTICE 'Class of student % is being updated from % to %', NEW.S_NAME, OLD.S_CLASS, NEW.S_CLASS;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER update_sclass_trigger
+BEFORE UPDATE OF S_CLASS ON STUDENT
+FOR EACH ROW
+EXECUTE FUNCTION before_update_sclass();
+

@@ -1,0 +1,242 @@
+
+1. Create Tables
+
+CREATE TABLE CITIES (
+    CITY CHAR(20),
+    STATE CHAR(20),
+    PRIMARY KEY (CITY)
+);
+
+CREATE TABLE WAREHOUSES (
+    WID INTEGER PRIMARY KEY,
+    WNAME CHAR(30),
+    LOCATION CHAR(20)
+);
+
+CREATE TABLE STORES (
+    SID INTEGER PRIMARY KEY,
+    STORE_NAME CHAR(20),
+    LOCATION_CITY CHAR(20)
+);
+
+CREATE TABLE ITEMS (
+    ITEMNO INTEGER PRIMARY KEY,
+    DESCRIPTION TEXT,
+    WEIGHT DECIMAL(5, 2),
+    COST DECIMAL(5, 2)
+);
+
+CREATE TABLE CUSTOMER (
+    CNO INTEGER PRIMARY KEY,
+    CNAME CHAR(50),
+    ADDR VARCHAR(50),
+    CU_CITY CHAR(20)
+);
+
+CREATE TABLE ORDERS (
+    ONO INTEGER PRIMARY KEY,
+    ODATE DATE
+);
+
+CREATE TABLE ITEM_ORDERS (
+    ITEMNO INTEGER,
+    ONO INTEGER,
+    ORDERED_QUANTITY INTEGER,
+    PRIMARY KEY (ITEMNO, ONO),
+    FOREIGN KEY (ITEMNO) REFERENCES ITEMS(ITEMNO),
+    FOREIGN KEY (ONO) REFERENCES ORDERS(ONO)
+);
+
+CREATE TABLE STORE_ITEMS (
+    SID INTEGER,
+    ITEMNO INTEGER,
+    QUANTITY INTEGER,
+    PRIMARY KEY (SID, ITEMNO),
+    FOREIGN KEY (SID) REFERENCES STORES(SID),
+    FOREIGN KEY (ITEMNO) REFERENCES ITEMS(ITEMNO)
+);
+
+
+---
+
+2. Insert Values
+
+Insert into CITIES
+
+INSERT INTO CITIES (CITY, STATE) VALUES
+('Pune', 'Maharashtra'),
+('Mumbai', 'Maharashtra'),
+('Delhi', 'Delhi'),
+('Bangalore', 'Karnataka');
+
+Insert into WAREHOUSES
+
+INSERT INTO WAREHOUSES (WID, WNAME, LOCATION) VALUES
+(1, 'Hardware', 'Pune'),
+(2, 'Electronics', 'Mumbai'),
+(3, 'Furniture', 'Delhi');
+
+Insert into STORES
+
+INSERT INTO STORES (SID, STORE_NAME, LOCATION_CITY) VALUES
+(1, 'StoreA', 'Pune'),
+(2, 'StoreB', 'Mumbai'),
+(3, 'StoreC', 'Delhi'),
+(4, 'StoreD', 'Pune');
+
+Insert into ITEMS
+
+INSERT INTO ITEMS (ITEMNO, DESCRIPTION, WEIGHT, COST) VALUES
+(1, 'Hammer', 2.50, 500.00),
+(2, 'Nails', 1.50, 100.00),
+(3, 'Saw', 3.00, 700.00),
+(4, 'Drill', 4.00, 1500.00);
+
+Insert into CUSTOMER
+
+INSERT INTO CUSTOMER (CNO, CNAME, ADDR, CU_CITY) VALUES
+(101, 'Mr. Joshi', '123 Street, Pune', 'Pune'),
+(102, 'Ms. Sharma', '45 Avenue, Mumbai', 'Mumbai'),
+(103, 'Mr. Verma', '89 Lane, Delhi', 'Delhi');
+
+Insert into ORDERS
+
+INSERT INTO ORDERS (ONO, ODATE) VALUES
+(201, '2020-10-03'),
+(202, '2020-10-03'),
+(203, '2021-05-15');
+
+Insert into ITEM_ORDERS
+
+INSERT INTO ITEM_ORDERS (ITEMNO, ONO, ORDERED_QUANTITY) VALUES
+(1, 201, 10),
+(2, 202, 5),
+(3, 203, 2);
+
+Insert into STORE_ITEMS
+
+INSERT INTO STORE_ITEMS (SID, ITEMNO, QUANTITY) VALUES
+(1, 1, 50),
+(1, 2, 30),
+(2, 3, 20),
+(3, 4, 10);
+
+
+---
+
+3. Create Views
+
+View 1: Details of all the stores in 'Hardware' warehouse
+
+CREATE VIEW Hardware_Stores AS
+SELECT S.SID, S.STORE_NAME, S.LOCATION_CITY
+FROM STORES S
+JOIN WAREHOUSES W ON S.LOCATION_CITY = W.LOCATION
+WHERE W.WNAME = 'Hardware';
+
+View 2: Details of all customers who placed orders on '2020-10-03'
+
+CREATE VIEW Customers_On_Date AS
+SELECT C.CNO, C.CNAME, C.ADDR, C.CU_CITY
+FROM CUSTOMER C
+JOIN ORDERS O ON C.CNO = O.ONO
+WHERE O.ODATE = '2020-10-03';
+
+
+---
+
+4. Queries
+
+a) List the names of stores of 'Hardware' warehouse located at Pune.
+
+SELECT STORE_NAME
+FROM Hardware_Stores
+WHERE LOCATION_CITY = 'Pune';
+
+b) List the names of customers from Pune city who placed orders on '2020-10-03'.
+
+SELECT CNAME
+FROM Customers_On_Date
+WHERE CU_CITY = 'Pune';
+
+c) List the orders placed by 'Mr. Joshi'.
+
+SELECT O.ONO, O.ODATE
+FROM ORDERS O
+JOIN CUSTOMER C ON O.ONO = C.CNO
+WHERE C.CNAME = 'Mr. Joshi';
+
+
+---
+
+5. Stored Functions
+
+Function 1: Count the number of items in a store.
+
+CREATE OR REPLACE FUNCTION count_items_in_store(store_name CHAR(20)) RETURNS INTEGER AS $$
+DECLARE
+    item_count INTEGER;
+BEGIN
+    SELECT COUNT(*)
+    INTO item_count
+    FROM STORE_ITEMS SI
+    JOIN STORES S ON SI.SID = S.SID
+    WHERE S.STORE_NAME = store_name;
+
+    IF item_count IS NULL THEN
+        RAISE EXCEPTION 'Invalid store name';
+    END IF;
+
+    RETURN item_count;
+END;
+$$ LANGUAGE plpgsql;
+
+Function 2: Display all warehouses in a city.
+
+CREATE OR REPLACE FUNCTION warehouses_in_city(city_name CHAR(20)) RETURNS SETOF CHAR(30) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT WNAME
+    FROM WAREHOUSES
+    WHERE LOCATION = city_name;
+
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Invalid city name';
+    END IF;
+END;
+$$ LANGUAGE plpgsql;
+
+
+---
+
+6. Triggers
+
+Trigger 1: Ensure item weight is not less than 2kg.
+
+CREATE OR REPLACE FUNCTION check_weight() RETURNS TRIGGER AS $$
+BEGIN
+    IF NEW.WEIGHT < 2 THEN
+        RAISE EXCEPTION 'Weight is less than 2 kg';
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER weight_check
+BEFORE INSERT OR UPDATE ON ITEMS
+FOR EACH ROW
+EXECUTE FUNCTION check_weight();
+
+Trigger 2: Display a message before deleting a customer record.
+
+CREATE OR REPLACE FUNCTION before_customer_delete() RETURNS TRIGGER AS $$
+BEGIN
+    RAISE NOTICE 'Customer record is being deleted: %', OLD.CNAME;
+    RETURN OLD;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER customer_delete_notice
+BEFORE DELETE ON CUSTOMER
+FOR EACH ROW
+EXECUTE FUNCTION before_customer_delete();

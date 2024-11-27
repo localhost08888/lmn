@@ -1,0 +1,235 @@
+1. Create Tables
+
+CREATE TABLE PROJECT (
+    PNO INTEGER PRIMARY KEY,
+    P_NAME CHAR(30),
+    PTYPE CHAR(20),
+    DURATION INTEGER,
+    START_DATE DATE
+);
+
+CREATE TABLE EMPLOYEE (
+    ENO INTEGER PRIMARY KEY,
+    E_NAME CHAR(20),
+    QUALIFICATION CHAR(15),
+    JOINDATE DATE
+);
+
+CREATE TABLE PROJECT_EMPLOYEE (
+    PNO INTEGER,
+    ENO INTEGER,
+    NO_OF_HOURS_WORKED INTEGER,
+    PRIMARY KEY (PNO, ENO),
+    FOREIGN KEY (PNO) REFERENCES PROJECT(PNO),
+    FOREIGN KEY (ENO) REFERENCES EMPLOYEE(ENO)
+);
+
+
+---
+
+2. Insert Values
+
+Insert into PROJECT
+
+INSERT INTO PROJECT (PNO, P_NAME, PTYPE, DURATION, START_DATE) VALUES
+(1, 'System', 'Development', 24, '2020-01-01'),
+(2, 'Robotics', 'Research', 36, '2019-06-15'),
+(3, 'AI Model', 'Development', 18, '2021-03-01'),
+(4, 'Network Upgrade', 'Maintenance', 12, '2022-01-01');
+
+Insert into EMPLOYEE
+
+INSERT INTO EMPLOYEE (ENO, E_NAME, QUALIFICATION, JOINDATE) VALUES
+(1001, 'Alice', 'B.Tech', '2018-05-20'),
+(1002, 'Arjun', 'MCA', '2017-03-10'),
+(1003, 'Bob', 'M.Tech', '2019-01-15'),
+(1004, 'Charlie', 'MBA', '2021-06-01'),
+(1005, 'Annie', 'B.Sc', '2015-12-20');
+
+Insert into PROJECT_EMPLOYEE
+
+INSERT INTO PROJECT_EMPLOYEE (PNO, ENO, NO_OF_HOURS_WORKED) VALUES
+(1, 1001, 100),
+(1, 1002, 120),
+(2, 1003, 90),
+(3, 1001, 60),
+(3, 1004, 80),
+(2, 1005, 150);
+
+
+---
+
+3. Solve Queries
+
+Query 1: Find the names of employees starting with 'A'.
+
+SELECT E_NAME
+FROM EMPLOYEE
+WHERE E_NAME LIKE 'A%';
+
+Query 2: Find the details of employees working on the project "System".
+
+SELECT E.ENO, E.E_NAME, E.QUALIFICATION, E.JOINDATE
+FROM EMPLOYEE E
+JOIN PROJECT_EMPLOYEE PE ON E.ENO = PE.ENO
+JOIN PROJECT P ON PE.PNO = P.PNO
+WHERE P.P_NAME = 'System';
+
+Query 3: Find the employee numbers of employees who do not work on the project "Robotics".
+
+SELECT DISTINCT E.ENO
+FROM EMPLOYEE E
+WHERE E.ENO NOT IN (
+    SELECT PE.ENO
+    FROM PROJECT_EMPLOYEE PE
+    JOIN PROJECT P ON PE.PNO = P.PNO
+    WHERE P.P_NAME = 'Robotics'
+);
+
+Query 4: Get the employee numbers of employees who work on at least one project that employee number '2000' works on.
+
+SELECT DISTINCT PE2.ENO
+FROM PROJECT_EMPLOYEE PE1
+JOIN PROJECT_EMPLOYEE PE2 ON PE1.PNO = PE2.PNO
+WHERE PE1.ENO = 2000 AND PE2.ENO <> 2000;
+
+Query 5: List the names of the first three employees in alphabetical order.
+
+SELECT E_NAME
+FROM EMPLOYEE
+ORDER BY E_NAME ASC
+LIMIT 3;
+
+Query 6: Find the names of the employees whose project duration is more than three years.
+
+SELECT DISTINCT E.E_NAME
+FROM EMPLOYEE E
+JOIN PROJECT_EMPLOYEE PE ON E.ENO = PE.ENO
+JOIN PROJECT P ON PE.PNO = P.PNO
+WHERE P.DURATION > 36;
+
+
+---
+
+4. Functions
+
+a) Function to accept project name as input and return the number of employees working on the project.
+
+CREATE OR REPLACE FUNCTION employee_count_by_project(pname CHAR(30)) RETURNS INTEGER AS $$
+DECLARE
+    emp_count INTEGER;
+BEGIN
+    SELECT COUNT(DISTINCT ENO)
+    INTO emp_count
+    FROM PROJECT_EMPLOYEE PE
+    JOIN PROJECT P ON PE.PNO = P.PNO
+    WHERE P.P_NAME = pname;
+
+    RETURN emp_count;
+END;
+$$ LANGUAGE plpgsql;
+
+b) Function to find the number of employees whose date of joining is before '2010-10-03'.
+
+CREATE OR REPLACE FUNCTION count_employees_before_date() RETURNS INTEGER AS $$
+DECLARE
+    emp_count INTEGER;
+BEGIN
+    SELECT COUNT(*)
+    INTO emp_count
+    FROM EMPLOYEE
+    WHERE JOINDATE < '2010-10-03';
+
+    RETURN emp_count;
+END;
+$$ LANGUAGE plpgsql;
+
+
+---
+
+5. Stored Functions
+
+a) Function to accept project name and display the names of employees working on that project.
+
+CREATE OR REPLACE FUNCTION employees_by_project(pname CHAR(30)) RETURNS SETOF CHAR(20) AS $$
+DECLARE
+    invalid_project EXCEPTION;
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM PROJECT WHERE P_NAME = pname) THEN
+        RAISE invalid_project USING MESSAGE = 'Invalid project name';
+    END IF;
+
+    RETURN QUERY
+    SELECT E.E_NAME
+    FROM EMPLOYEE E
+    JOIN PROJECT_EMPLOYEE PE ON E.ENO = PE.ENO
+    JOIN PROJECT P ON PE.PNO = P.PNO
+    WHERE P.P_NAME = pname;
+END;
+$$ LANGUAGE plpgsql;
+
+b) Function to accept employee number and count the number of projects they are working on.
+
+CREATE OR REPLACE FUNCTION count_projects_by_employee(eno INTEGER) RETURNS INTEGER AS $$
+DECLARE
+    project_count INTEGER;
+BEGIN
+    SELECT COUNT(*)
+    INTO project_count
+    FROM PROJECT_EMPLOYEE
+    WHERE ENO = eno;
+
+    IF project_count = 0 THEN
+        RAISE EXCEPTION 'Invalid employee number or no projects assigned';
+    END IF;
+
+    RETURN project_count;
+END;
+$$ LANGUAGE plpgsql;
+
+
+---
+
+6. Functions Using Cursor
+
+a) Function using cursor to accept project name and display details of employees working on that project.
+
+CREATE OR REPLACE FUNCTION cursor_employees_by_project(pname CHAR(30)) RETURNS VOID AS $$
+DECLARE
+    emp_cursor CURSOR FOR
+    SELECT E.ENO, E.E_NAME, E.QUALIFICATION, E.JOINDATE
+    FROM EMPLOYEE E
+    JOIN PROJECT_EMPLOYEE PE ON E.ENO = PE.ENO
+    JOIN PROJECT P ON PE.PNO = P.PNO
+    WHERE P.P_NAME = pname;
+    emp_record RECORD;
+BEGIN
+    OPEN emp_cursor;
+    LOOP
+        FETCH emp_cursor INTO emp_record;
+        EXIT WHEN NOT FOUND;
+        RAISE NOTICE 'Employee: % - % - % - %', emp_record.ENO, emp_record.E_NAME, emp_record.QUALIFICATION, emp_record.JOINDATE;
+    END LOOP;
+    CLOSE emp_cursor;
+END;
+$$ LANGUAGE plpgsql;
+
+b) Function using cursor to accept year and display competitions under type 'sport' for each class in the given year.
+
+CREATE OR REPLACE FUNCTION competitions_by_year(yr INTEGER) RETURNS VOID AS $$
+DECLARE
+    comp_cursor CURSOR FOR
+    SELECT P.P_NAME, P.PTYPE, P.DURATION, P.START_DATE
+    FROM PROJECT P
+    WHERE EXTRACT(YEAR FROM P.START_DATE) = yr AND P.PTYPE = 'Sport';
+    comp_record RECORD;
+BEGIN
+    OPEN comp_cursor;
+    LOOP
+        FETCH comp_cursor INTO comp_record;
+        EXIT WHEN NOT FOUND;
+        RAISE NOTICE 'Competition: % - % - % - %', comp_record.P_NAME, comp_record.PTYPE, comp_record.DURATION, comp_record.START_DATE;
+    END LOOP;
+    CLOSE comp_cursor;
+END;
+$$ LANGUAGE plpgsql;

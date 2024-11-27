@@ -1,0 +1,231 @@
+1. Create Tables
+
+CREATE TABLE DEPT (
+    DEPTNO VARCHAR(10),
+    DEPT_NAME CHAR(20),
+    PRIMARY KEY (DEPTNO)
+);
+
+CREATE TABLE SALESMAN (
+    SNO INTEGER PRIMARY KEY,
+    S_NAME CHAR(30),
+    START_YEAR YEAR,
+    DEP VARCHAR(10),
+    FOREIGN KEY (DEP) REFERENCES DEPT(DEPTNO)
+);
+
+CREATE TABLE TRIP (
+    TNO INTEGER PRIMARY KEY,
+    FROM_CITY CHAR(20),
+    TO_CITY CHAR(20),
+    DEPARTURE_DATE DATE,
+    RETURN_DATE DATE,
+    SNO INTEGER,
+    FOREIGN KEY (SNO) REFERENCES SALESMAN(SNO)
+);
+
+CREATE TABLE EXPENSE (
+    EID INTEGER PRIMARY KEY,
+    TNO INTEGER,
+    AMOUNT MONEY,
+    FOREIGN KEY (TNO) REFERENCES TRIP(TNO)
+);
+
+2. Insert Entries
+
+-- Insert into DEPT table
+INSERT INTO DEPT (DEPTNO, DEPT_NAME) VALUES
+('D1', 'Computer'),
+('D2', 'Western'),
+('D3', 'Sales'),
+('D4', 'HR');
+
+-- Insert into SALESMAN table
+INSERT INTO SALESMAN (SNO, S_NAME, START_YEAR, DEP) VALUES
+(1, 'Mr. Patil', 2005, 'D2'),
+(2, 'Mr. Sharma', 2007, 'D1'),
+(3, 'Mr. Verma', 2010, 'D3'),
+(4, 'Ms. Gupta', 2015, 'D2'),
+(5, 'Mr. Mehta', 2018, 'D4');
+
+-- Insert into TRIP table
+INSERT INTO TRIP (TNO, FROM_CITY, TO_CITY, DEPARTURE_DATE, RETURN_DATE, SNO) VALUES
+(1, 'Pune', 'Mumbai', '2024-11-01', '2024-11-05', 1),
+(2, 'Delhi', 'Calcutta', '2024-10-15', '2024-10-18', 2),
+(3, 'Bangalore', 'Mumbai', '2024-09-01', '2024-09-04', 3),
+(4, 'Chennai', 'Mumbai', '2024-08-10', '2024-08-12', 4),
+(5, 'Pune', 'Calcutta', '2024-07-20', '2024-07-25', 5);
+
+-- Insert into EXPENSE table
+INSERT INTO EXPENSE (EID, TNO, AMOUNT) VALUES
+(1, 1, 12000),
+(2, 2, 9000),
+(3, 3, 15000),
+(4, 4, 5000),
+(5, 5, 13000);
+
+3. Solve Queries
+
+Query 1: Trips exceeding Rs. 10,000 in expenses
+
+SELECT T.TNO, T.FROM_CITY, T.TO_CITY, T.DEPARTURE_DATE, T.RETURN_DATE
+FROM TRIP T
+JOIN EXPENSE E ON T.TNO = E.TNO
+WHERE E.AMOUNT > 10000;
+
+Query 2: Salesman numbers and names of salesmen who made trips to Calcutta
+
+SELECT DISTINCT S.SNO, S.S_NAME
+FROM SALESMAN S
+JOIN TRIP T ON S.SNO = T.SNO
+WHERE T.TO_CITY = 'Calcutta';
+
+Query 3: Delete all trips made by department "Computer" having expenses more than Rs. 15,000
+
+DELETE FROM TRIP
+WHERE TNO IN (
+    SELECT T.TNO
+    FROM TRIP T
+    JOIN SALESMAN S ON T.SNO = S.SNO
+    JOIN DEPT D ON S.DEP = D.DEPTNO
+    JOIN EXPENSE E ON T.TNO = E.TNO
+    WHERE D.DEPT_NAME = 'Computer' AND E.AMOUNT > 15000
+);
+
+Query 4: Departments with the highest number of trips
+
+SELECT S.DEP, COUNT(T.TNO) AS trip_count
+FROM SALESMAN S
+JOIN TRIP T ON S.SNO = T.SNO
+GROUP BY S.DEP
+ORDER BY trip_count DESC
+LIMIT 1;
+
+Query 5: Total expenses incurred by the salesman "Mr. Patil"
+
+SELECT SUM(E.AMOUNT) AS total_expenses
+FROM EXPENSE E
+JOIN SALESMAN S ON E.SNO = S.SNO
+WHERE S.S_NAME = 'Mr. Patil';
+
+Query 6: Increase the expenses of all the trips by Rs. 5000
+
+UPDATE EXPENSE
+SET AMOUNT = AMOUNT + 5000;
+
+Query 7: Create a view to list the details of all salesmen from the Western department
+
+CREATE VIEW western_salesmen AS
+SELECT S.SNO, S.S_NAME, S.START_YEAR, S.DEP
+FROM SALESMAN S
+JOIN DEPT D ON S.DEP = D.DEPTNO
+WHERE D.DEPT_NAME = 'Western';
+
+Query 8: Create a view to list all salesman's name, trip details, and expenses
+
+CREATE VIEW salesman_trip_expenses AS
+SELECT S.SNO, S.S_NAME, T.TNO, T.FROM_CITY, T.TO_CITY, T.DEPARTURE_DATE, T.RETURN_DATE, E.AMOUNT
+FROM SALESMAN S
+JOIN TRIP T ON S.SNO = T.SNO
+JOIN EXPENSE E ON T.TNO = E.TNO;
+
+Query 9a: List the details of salesmen from "Western" department, whose start year is 2005
+
+SELECT * FROM western_salesmen
+WHERE START_YEAR = 2005;
+
+Query 9b: List the names of salesmen from "Western" department, for whom their total trip expense is Rs. 100,000
+
+SELECT S_NAME
+FROM salesman_trip_expenses
+GROUP BY SNO, S_NAME
+HAVING SUM(AMOUNT) = 100000;
+
+Query 9c: List the names of salesmen who have gone on a trip to "Mumbai"
+
+SELECT DISTINCT S.S_NAME
+FROM salesman_trip_expenses ST
+JOIN SALESMAN S ON ST.SNO = S.SNO
+WHERE ST.TO_CITY = 'Mumbai';
+
+Query 10: PL/pgSQL function to find a business trip with maximum expenses
+
+CREATE OR REPLACE FUNCTION max_expense_trip() RETURNS TABLE(TNO INTEGER, MAX_EXPENSE MONEY) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT T.TNO, MAX(E.AMOUNT)
+    FROM TRIP T
+    JOIN EXPENSE E ON T.TNO = E.TNO
+    GROUP BY T.TNO
+    ORDER BY MAX(E.AMOUNT) DESC
+    LIMIT 1;
+END;
+$$ LANGUAGE plpgsql;
+
+Query 11: PL/pgSQL function to count the total number of business trips from 'Pune' to 'Mumbai'
+
+CREATE OR REPLACE FUNCTION count_pune_mumbai_trips() RETURNS INTEGER AS $$
+DECLARE
+    trip_count INTEGER;
+BEGIN
+    SELECT COUNT(*)
+    INTO trip_count
+    FROM TRIP
+    WHERE FROM_CITY = 'Pune' AND TO_CITY = 'Mumbai';
+    RETURN trip_count;
+END;
+$$ LANGUAGE plpgsql;
+
+Query 12: Stored function using cursor to list all salesman's name and their trip expenses details
+
+CREATE OR REPLACE FUNCTION list_salesman_trip_expenses() RETURNS SETOF RECORD AS $$
+DECLARE
+    rec RECORD;
+    cur CURSOR FOR
+    SELECT S.S_NAME, T.TNO, T.FROM_CITY, T.TO_CITY, T.DEPARTURE_DATE, T.RETURN_DATE, E.AMOUNT
+    FROM SALESMAN S
+    JOIN TRIP T ON S.SNO = T.SNO
+    JOIN EXPENSE E ON T.TNO = E.TNO;
+BEGIN
+    FOR rec IN cur LOOP
+        RETURN NEXT rec;
+    END LOOP;
+    CLOSE cur;
+END;
+$$ LANGUAGE plpgsql;
+
+Query 13: Stored function using cursor to display the count of salesmen for each department
+
+CREATE OR REPLACE FUNCTION count_salesmen_per_dept() RETURNS SETOF RECORD AS $$
+DECLARE
+    rec RECORD;
+    cur CURSOR FOR
+    SELECT D.DEPT_NAME, COUNT(S.SNO)
+    FROM SALESMAN S
+    JOIN DEPT D ON S.DEP = D.DEPTNO
+    GROUP BY D.DEPT_NAME;
+BEGIN
+    FOR rec IN cur LOOP
+        RETURN NEXT rec;
+    END LOOP;
+    CLOSE cur;
+END;
+$$ LANGUAGE plpgsql;
+
+Query 14: Trigger before inserting into an Expense table to check the amount
+
+CREATE OR REPLACE FUNCTION check_expense_amount() RETURNS TRIGGER AS $$
+BEGIN
+    IF NEW.AMOUNT > 50000 THEN
+        RAISE EXCEPTION 'Expense amount exceeds the limit of Rs. 50000';
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER expense_amount_trigger
+BEFORE INSERT ON EXPENSE
+FOR EACH ROW
+EXECUTE FUNCTION check_expense_amount();
+
+Query 15
